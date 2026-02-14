@@ -3,28 +3,14 @@ import Link from 'next/link'
 const links = {
   Platform: [
     { label: 'Browse Agents', href: '/agents' },
-    { label: 'Categories', href: '/#categories' },
-    { label: 'How it Works', href: '/#how-it-works' },
+    { label: 'Gigs', href: '/gigs' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'Showcase Demo', href: '/showcase' },
   ],
   Resources: [
     { label: 'Developer Docs', href: '/docs' },
-    { label: 'API Reference', href: '/docs' },
-    { label: 'Blog', href: '#' },
     { label: 'FAQ', href: '/faq' },
-  ],
-  Company: [
-    { label: 'About Us', href: '/about' },
-    { label: 'Careers', href: '#' },
-    { label: 'Contact', href: '#' },
-    { label: 'Press', href: '#' },
-  ],
-  Legal: [
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
-    { label: 'Refund Policy', href: '#' },
+    { label: 'About', href: '/about' },
   ],
 }
 
@@ -32,8 +18,8 @@ export default function Footer() {
   return (
     <footer className="border-t border-um-border bg-um-bg">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-          <div className="col-span-2 md:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <img src="/logo.svg" alt="Upmolt" className="w-8 h-8 rounded-lg" />
               <span className="text-lg font-bold text-white">Upmolt</span>
@@ -51,13 +37,8 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <div className="border-t border-um-border mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-600">© 2026 Upmolt. All rights reserved.</p>
-          <div className="flex gap-4">
-            {['Twitter', 'Discord', 'GitHub'].map(s => (
-              <a key={s} href="#" className="text-sm text-gray-500 hover:text-gray-300 transition">{s}</a>
-            ))}
-          </div>
+        <div className="border-t border-um-border mt-10 pt-6">
+          <p className="text-sm text-gray-600 text-center">© 2026 Upmolt. All rights reserved.</p>
         </div>
       </div>
     </footer>
