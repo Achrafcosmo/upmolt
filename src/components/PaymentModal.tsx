@@ -12,7 +12,9 @@ interface PaymentModalProps {
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     solana?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     solflare?: any
   }
 }
@@ -21,12 +23,17 @@ export default function PaymentModal({ amountUsd, taskId, subscriptionId, onSucc
   const [step, setStep] = useState<'ready' | 'paying' | 'verifying' | 'success' | 'error'>('ready')
   const [solPrice, setSolPrice] = useState<number>(0)
   const [amountSol, setAmountSol] = useState<number>(0)
-  const [paymentId, setPaymentId] = useState<string>('')
-  const [recipient, setRecipient] = useState<string>('')
   const [error, setError] = useState('')
+  const [manualMode, setManualMode] = useState(false)
+  const [manualSig, setManualSig] = useState('')
+  const [paymentData, setPaymentData] = useState<{ payment_id: string; amount_sol: number; recipient: string } | null>(null)
+
+  const hasPhantom = typeof window !== 'undefined' && !!window.solana
+  const hasSolflare = typeof window !== 'undefined' && !!window.solflare
+  const hasWallet = hasPhantom || hasSolflare
 
   useEffect(() => {
-    fetch('/api/payments/sol-price').then(r => r.json()).then(d => setSolPrice(d.data?.price || 150))
+    fetch('/api/payments/sol-price').then(r => r.json()).then(d => setSolPrice(d.data?.price || 150)).catch(() => setSolPrice(150))
   }, [])
 
   useEffect(() => {
@@ -40,20 +47,19 @@ export default function PaymentModal({ amountUsd, taskId, subscriptionId, onSucc
     })
     const d = await res.json()
     if (d.error) throw new Error(d.error)
+    setPaymentData(d.data)
     return d.data
   }
 
-  async function payWithWallet() {
+  async function payWithWallet(walletType: 'phantom' | 'solflare') {
     setStep('paying')
     setError('')
     try {
-      const wallet = window.solana || window.solflare
-      if (!wallet) { setError('No Solana wallet found. Install Phantom or Solflare.'); setStep('error'); return }
+      const wallet = walletType === 'phantom' ? window.solana : window.solflare
+      if (!wallet) { setError(`${walletType === 'phantom' ? 'Phantom' : 'Solflare'} wallet not found.`); setStep('error'); return }
 
       await wallet.connect()
       const payData = await createPayment()
-      setPaymentId(payData.payment_id)
-      setRecipient(payData.recipient)
 
       const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js')
       const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed')
@@ -80,15 +86,41 @@ export default function PaymentModal({ amountUsd, taskId, subscriptionId, onSucc
 
       setStep('success')
       setTimeout(onSuccess, 2000)
-    } catch (e: any) {
-      setError(e.message || 'Payment failed')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Payment failed'
+      setError(msg)
+      setStep('error')
+    }
+  }
+
+  async function handleManualVerify() {
+    if (!manualSig.trim()) return
+    setStep('verifying')
+    setError('')
+    try {
+      let pid = paymentData?.payment_id
+      if (!pid) {
+        const pd = await createPayment()
+        pid = pd.payment_id
+      }
+      const verifyRes = await fetch('/api/payments/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_id: pid, tx_signature: manualSig.trim() })
+      })
+      const vd = await verifyRes.json()
+      if (vd.error) throw new Error(vd.error)
+      setStep('success')
+      setTimeout(onSuccess, 2000)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Verification failed'
+      setError(msg)
       setStep('error')
     }
   }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-um-card border border-um-border rounded-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-um-card border border-um-border rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         {step === 'success' ? (
           <div className="text-center py-4">
             <div className="text-6xl mb-4">🎉</div>
@@ -124,19 +156,52 @@ export default function PaymentModal({ amountUsd, taskId, subscriptionId, onSucc
                 <div className="w-12 h-12 border-4 border-um-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-gray-400">Confirm in your wallet...</p>
               </div>
+            ) : manualMode ? (
+              <div className="space-y-4">
+                <div className="bg-um-bg rounded-xl p-4 border border-um-border">
+                  <p className="text-sm text-gray-400 mb-2">Send <span className="text-um-cyan font-bold">◎ {amountSol}</span> SOL to:</p>
+                  <div className="bg-um-card rounded-lg p-3 border border-um-border">
+                    <p className="text-xs text-white font-mono break-all">{paymentData?.recipient || 'CLeafjb6iuHiHknDNKhVuAVcqytMxrJdESopZcwCw1bj'}</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 block mb-1">Transaction signature</label>
+                  <input value={manualSig} onChange={e => setManualSig(e.target.value)} placeholder="Paste tx signature..." className="w-full bg-um-bg border border-um-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-um-purple text-sm font-mono" />
+                </div>
+                <button onClick={handleManualVerify} disabled={!manualSig.trim()} className="w-full gradient-btn text-white py-3.5 rounded-xl font-medium transition disabled:opacity-50">Verify Payment</button>
+                <button onClick={() => setManualMode(false)} className="w-full text-gray-500 text-sm hover:text-white transition">← Back to wallet payment</button>
+              </div>
             ) : (
-              <button onClick={payWithWallet} className="w-full gradient-btn text-white py-3.5 rounded-xl font-medium text-lg transition">
-                Pay with Phantom / Solflare
-              </button>
+              <div className="space-y-3">
+                {hasPhantom && (
+                  <button onClick={() => payWithWallet('phantom')} className="w-full gradient-btn text-white py-3.5 rounded-xl font-medium text-lg transition flex items-center justify-center gap-2">
+                    👻 Pay with Phantom
+                  </button>
+                )}
+                {hasSolflare && (
+                  <button onClick={() => payWithWallet('solflare')} className="w-full bg-um-bg border border-um-border text-white py-3.5 rounded-xl font-medium transition flex items-center justify-center gap-2 hover:border-um-purple">
+                    🌞 Pay with Solflare
+                  </button>
+                )}
+                {!hasWallet && (
+                  <div className="text-center space-y-3">
+                    <p className="text-gray-400 text-sm">No Solana wallet detected</p>
+                    <a href="https://phantom.app" target="_blank" rel="noopener noreferrer" className="w-full gradient-btn text-white py-3.5 rounded-xl font-medium text-lg transition block text-center">Install Phantom →</a>
+                  </div>
+                )}
+                <button onClick={async () => { if (!paymentData) { try { await createPayment() } catch {} } setManualMode(true) }} className="w-full bg-um-bg border border-um-border text-gray-300 hover:text-white py-3 rounded-xl text-sm transition">
+                  Or send manually & paste tx signature
+                </button>
+              </div>
             )}
 
             {step === 'error' && (
               <button onClick={() => setStep('ready')} className="w-full bg-um-bg border border-um-border text-gray-300 py-3 rounded-xl mt-3">Try Again</button>
             )}
 
-            {(step === 'ready' || step === 'error') && (
-              <button onClick={onSuccess} className="w-full bg-um-bg border border-um-border text-gray-400 hover:text-white py-3 rounded-xl mt-3 text-sm transition">
-                Skip Payment (Free Trial)
+            {(step === 'ready' || step === 'error') && !manualMode && (
+              <button onClick={onSuccess} className="w-full text-gray-600 hover:text-gray-400 py-2 mt-2 text-xs transition text-center">
+                Pay Later
               </button>
             )}
           </>

@@ -21,5 +21,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     updated_at: new Date().toISOString(),
   }).eq('id', id)
 
+  // Karma system: increment agent's karma and gigs_completed
+  if (gig.assigned_agent_id) {
+    const { data: agent } = await sb.from('um_agents').select('karma, gigs_completed').eq('id', gig.assigned_agent_id).single()
+    if (agent) {
+      await sb.from('um_agents').update({
+        karma: (agent.karma || 0) + 10,
+        gigs_completed: (agent.gigs_completed || 0) + 1,
+      }).eq('id', gig.assigned_agent_id)
+    }
+  }
+
   return NextResponse.json({ data: { success: true } })
 }

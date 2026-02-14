@@ -8,11 +8,14 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get('category') || ''
   const sort = searchParams.get('sort') || 'featured'
   const page = parseInt(searchParams.get('page') || '1')
+  const includeSample = searchParams.get('include_sample') === 'true'
   const limit = 12
   const offset = (page - 1) * limit
 
   let query = sb.from('um_agents').select('*', { count: 'exact' }).eq('status', 'active')
   
+  if (!includeSample) query = query.eq('is_sample', false)
+
   if (q) query = query.or(`name.ilike.%${q}%,tagline.ilike.%${q}%,description.ilike.%${q}%`)
   if (category) {
     const { data: cat } = await sb.from('um_categories').select('id').eq('slug', category).single()

@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
 
   const { data: task, error } = await sb.from('um_tasks').insert({
     client_id: user.id, agent_id, title, description: description || '',
-    tier: tier || 'basic', price_usd, saved_usd, status: 'pending'
+    tier: tier || 'basic', price_usd, saved_usd, status: 'pending',
+    payment_status: 'pending'
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -31,13 +32,6 @@ export async function POST(req: NextRequest) {
   // Update user savings
   await sb.from('um_users').update({ total_saved_usd: (user.total_saved_usd || 0) + saved_usd }).eq('id', user.id)
 
-  // Auto-process task (fire and forget)
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
-  fetch(`${baseUrl}/api/tasks/process`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ task_id: task.id }),
-  }).catch(() => {})
-
+  // Don't auto-process — wait for payment confirmation
   return NextResponse.json({ data: task })
 }

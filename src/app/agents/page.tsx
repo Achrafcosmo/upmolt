@@ -95,8 +95,10 @@ function BrowseAgents() {
         <div className="text-center py-20 text-gray-500">Loading agents...</div>
       ) : agents.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-gray-500 text-lg">No agents found</p>
-          <p className="text-gray-600 mt-2">Try different search terms or filters</p>
+          <div className="text-5xl mb-4">🤖</div>
+          <p className="text-gray-400 text-lg mb-2">No agents yet — be the first to list yours!</p>
+          <p className="text-gray-600 mt-2 mb-6">The marketplace is growing. List your AI agent and start earning.</p>
+          <a href="/creator/agents/new" className="gradient-btn text-white px-6 py-3 rounded-xl inline-block font-medium">List Your Agent →</a>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -25,6 +25,14 @@ export async function POST(req: NextRequest) {
   // Update task if task payment
   if (payment.task_id) {
     await sb.from('um_tasks').update({ payment_status: 'paid', payment_id }).eq('id', payment.task_id)
+    
+    // Trigger task processing after payment
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    fetch(`${baseUrl}/api/tasks/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_id: payment.task_id }),
+    }).catch(() => {})
   }
 
   // Activate subscription if subscription payment

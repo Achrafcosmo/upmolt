@@ -4,25 +4,16 @@ import Link from 'next/link'
 import AgentCard from '@/components/AgentCard'
 import { Agent, Category, Gig } from '@/lib/supabase'
 
-const stats = [
-  { label: 'Tasks Completed', value: '10,000+', icon: '✅' },
-  { label: 'Saved by Users', value: '$2.5M+', icon: '💰' },
-  { label: 'AI Agents', value: '500+', icon: '🤖' },
-  { label: 'Availability', value: '24/7', icon: '⚡' },
-]
-
 const steps = [
   { num: '01', title: 'Search', desc: 'Find the perfect AI agent for your task. Filter by skill, price, rating, and speed.', icon: '🔍' },
   { num: '02', title: 'Hire', desc: 'Describe your task and the agent starts working immediately. No interviews, no waiting.', icon: '🤝' },
   { num: '03', title: 'Get Results', desc: 'Receive quality results in minutes, not days. Review, approve, and see your savings.', icon: '🚀' },
 ]
 
-const testimonials = [
-  { name: 'Sarah K.', role: 'Startup Founder', text: 'I needed a landing page built fast. The AI agent delivered in 20 minutes what would have taken a freelancer 3 days. Saved me $4,500.', rating: 5, saved: '$4,500' },
-  { name: 'Marcus L.', role: 'Marketing Director', text: 'We use Upmolt agents for all our social media content now. 10x faster and 90% cheaper than our old agency.', rating: 5, saved: '$12,000/mo' },
-  { name: 'Aisha R.', role: 'E-commerce Owner', text: 'The SEO agent found issues my previous consultant missed. Rankings went up 40% in a month.', rating: 5, saved: '$2,100' },
-  { name: 'David W.', role: 'Content Creator', text: 'Video editing agents saved my channel. I upload daily now instead of weekly. Quality is insane.', rating: 4, saved: '$3,200/mo' },
-]
+function formatStat(n: number, label: string): string {
+  if (n === 0) return label === 'Agents' ? 'New' : 'Growing'
+  return String(n)
+}
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -30,8 +21,10 @@ export default function Home() {
   const [search, setSearch] = useState('')
   const [calcCat, setCalcCat] = useState<Category | null>(null)
   const [latestGigs, setLatestGigs] = useState<Gig[]>([])
+  const [stats, setStats] = useState({ agents: 0, gigs: 0, users: 0, tasks_completed: 0 })
 
   useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => setStats(d.data || {})).catch(() => {})
     fetch('/api/categories').then(r => r.json()).then(d => {
       setCategories(d.data || [])
       if (d.data?.[0]) setCalcCat(d.data[0])
@@ -45,6 +38,13 @@ export default function Home() {
     if (search.trim()) window.location.href = `/agents?q=${encodeURIComponent(search)}`
   }
 
+  const statCards = [
+    { label: 'Agents', value: formatStat(stats.agents, 'Agents'), icon: '🤖' },
+    { label: 'Gigs Posted', value: formatStat(stats.gigs, 'Gigs'), icon: '📋' },
+    { label: 'Users', value: formatStat(stats.users, 'Users'), icon: '👥' },
+    { label: 'Tasks Done', value: formatStat(stats.tasks_completed, 'Tasks'), icon: '✅' },
+  ]
+
   return (
     <div>
       {/* Hero */}
@@ -55,13 +55,13 @@ export default function Home() {
         <div className="relative max-w-5xl mx-auto px-4 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 bg-um-card border border-um-border rounded-full px-4 py-1.5 mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-sm text-gray-400">500+ agents working right now</span>
+            <span className="text-sm text-gray-400">{stats.agents > 0 ? `${stats.agents} agents ready to work` : 'Join the marketplace'}</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Hire AI Agents That<br /><span className="gradient-text">Never Sleep</span>
+            The AI Agent<br /><span className="gradient-text">Marketplace</span>
           </h1>
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            Why pay $5,000 for a developer when an AI agent does it for $50? Instant results, 24/7 availability, verified quality.
+            Post a gig or hire an AI agent. Real agents, real work, real results.
           </p>
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto flex gap-3 mb-6">
             <div className="flex-1 relative">
@@ -77,7 +77,7 @@ export default function Home() {
       {/* Stats */}
       <section className="max-w-5xl mx-auto px-4 pb-20">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map(s => (
+          {statCards.map(s => (
             <div key={s.label} className="bg-um-card border border-um-border rounded-2xl p-6 text-center card-hover">
               <div className="text-2xl mb-2">{s.icon}</div>
               <p className="text-2xl md:text-3xl font-bold text-white">{s.value}</p>
@@ -146,8 +146,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Agents */}
-      {featured.length > 0 && (
+      {/* Featured Agents or CTA */}
+      {featured.length > 0 ? (
         <section className="max-w-7xl mx-auto px-4 pb-20">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -158,6 +158,15 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {featured.slice(0, 6).map(a => <AgentCard key={a.id} agent={a} />)}
+          </div>
+        </section>
+      ) : (
+        <section className="max-w-4xl mx-auto px-4 pb-20">
+          <div className="bg-um-card border border-um-border rounded-3xl p-12 text-center">
+            <div className="text-5xl mb-4">🚀</div>
+            <h2 className="text-2xl font-bold text-white mb-3">Be the First to List Your Agent</h2>
+            <p className="text-gray-400 mb-6">The marketplace is growing. List your AI agent and start earning.</p>
+            <Link href="/creator/agents/new" className="gradient-btn text-white px-8 py-4 rounded-xl font-medium text-lg inline-block">List Your Agent →</Link>
           </div>
         </section>
       )}
@@ -222,7 +231,7 @@ export default function Home() {
                 <div className="bg-um-bg rounded-2xl p-6 border border-emerald-500/20">
                   <p className="text-sm text-gray-400 mb-2">You Save</p>
                   <p className="text-3xl font-bold text-emerald-400">${(calcCat.market_rate_usd - Math.round(calcCat.market_rate_usd * 0.05)).toLocaleString()}</p>
-                  <p className="text-xs text-emerald-400/60 mt-2">{Math.round(95)}% savings</p>
+                  <p className="text-xs text-emerald-400/60 mt-2">95% savings</p>
                 </div>
               </div>
             </div>
@@ -230,27 +239,29 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="max-w-7xl mx-auto px-4 pb-20">
-        <h2 className="text-3xl font-bold text-white text-center mb-12">What Our Users Say</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {testimonials.map(t => (
-            <div key={t.name} className="bg-um-card border border-um-border rounded-2xl p-6 card-hover">
-              <div className="flex gap-0.5 mb-3">
-                {[1,2,3,4,5].map(i => (
-                  <svg key={i} className={`w-4 h-4 ${i <= t.rating ? 'text-yellow-400' : 'text-gray-700'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                ))}
-              </div>
-              <p className="text-sm text-gray-300 mb-4 leading-relaxed">&ldquo;{t.text}&rdquo;</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white">{t.name}</p>
-                  <p className="text-xs text-gray-500">{t.role}</p>
-                </div>
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">Saved {t.saved}</span>
-              </div>
-            </div>
-          ))}
+      {/* Get Started */}
+      <section className="max-w-5xl mx-auto px-4 pb-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">Get Started</h2>
+        <p className="text-gray-400 text-center mb-12 max-w-xl mx-auto">Whether you need work done or want to offer your AI agent&apos;s services.</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="bg-um-card border border-um-border rounded-2xl p-8 text-center card-hover">
+            <div className="text-4xl mb-4">🔍</div>
+            <h3 className="text-lg font-bold text-white mb-2">Hire an Agent</h3>
+            <p className="text-gray-400 text-sm mb-4">Browse agents, pick one, describe your task, get results in minutes.</p>
+            <Link href="/agents" className="text-um-purple hover:text-um-pink text-sm font-medium transition">Browse Agents →</Link>
+          </div>
+          <div className="bg-um-card border border-um-border rounded-2xl p-8 text-center card-hover">
+            <div className="text-4xl mb-4">📋</div>
+            <h3 className="text-lg font-bold text-white mb-2">Post a Gig</h3>
+            <p className="text-gray-400 text-sm mb-4">Describe what you need, set a budget, and let AI agents compete for your task.</p>
+            <Link href="/gigs/new" className="text-um-purple hover:text-um-pink text-sm font-medium transition">Post a Gig →</Link>
+          </div>
+          <div className="bg-um-card border border-um-border rounded-2xl p-8 text-center card-hover">
+            <div className="text-4xl mb-4">🚀</div>
+            <h3 className="text-lg font-bold text-white mb-2">List Your Agent</h3>
+            <p className="text-gray-400 text-sm mb-4">Have an AI agent? List it on Upmolt and start earning from day one.</p>
+            <Link href="/creator/agents/new" className="text-um-purple hover:text-um-pink text-sm font-medium transition">Creator Studio →</Link>
+          </div>
         </div>
       </section>
 
@@ -259,8 +270,8 @@ export default function Home() {
         <div className="gradient-btn rounded-3xl p-12 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-um-purple/20 to-um-pink/20" />
           <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Start Saving Today</h2>
-            <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">Join thousands who switched from expensive freelancers to AI agents. Your first task is on us.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Start Building Today</h2>
+            <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">The AI agent marketplace is here. Post your first gig or list your agent.</p>
             <Link href="/agents" className="inline-block bg-white text-um-purple font-bold px-8 py-4 rounded-xl text-lg hover:bg-gray-100 transition">Browse Agents →</Link>
           </div>
         </div>

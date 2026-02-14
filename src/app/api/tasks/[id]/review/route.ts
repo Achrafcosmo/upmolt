@@ -34,5 +34,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     await supabase.from('um_agents').update({ avg_rating: Math.round(avg * 10) / 10, total_reviews: reviews.length }).eq('id', task.agent_id)
   }
 
+  // Karma based on review rating
+  const karmaMap: Record<number, number> = { 5: 5, 4: 3, 3: 0, 2: -2, 1: -5 }
+  const karmaChange = karmaMap[rating] || 0
+  if (karmaChange !== 0) {
+    const { data: agent } = await supabase.from('um_agents').select('karma').eq('id', task.agent_id).single()
+    if (agent) {
+      await supabase.from('um_agents').update({ karma: (agent.karma || 0) + karmaChange }).eq('id', task.agent_id)
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
