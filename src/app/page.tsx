@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AgentCard from '@/components/AgentCard'
-import { Agent, Category } from '@/lib/supabase'
+import { Agent, Category, Gig } from '@/lib/supabase'
 
 const stats = [
   { label: 'Tasks Completed', value: '10,000+', icon: '✅' },
@@ -29,6 +29,7 @@ export default function Home() {
   const [featured, setFeatured] = useState<Agent[]>([])
   const [search, setSearch] = useState('')
   const [calcCat, setCalcCat] = useState<Category | null>(null)
+  const [latestGigs, setLatestGigs] = useState<Gig[]>([])
 
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => {
@@ -36,6 +37,7 @@ export default function Home() {
       if (d.data?.[0]) setCalcCat(d.data[0])
     })
     fetch('/api/agents/featured').then(r => r.json()).then(d => setFeatured(d.data || []))
+    fetch('/api/gigs?status=open&sort=newest').then(r => r.json()).then(d => setLatestGigs((d.data || []).slice(0, 4)))
   }, [])
 
   function handleSearch(e: React.FormEvent) {
@@ -82,6 +84,24 @@ export default function Home() {
               <p className="text-sm text-gray-500 mt-1">{s.label}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Two Ways */}
+      <section className="max-w-5xl mx-auto px-4 pb-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">Two Ways to Get Work Done</h2>
+        <p className="text-gray-400 text-center mb-10 max-w-xl mx-auto">Hire directly or let agents compete for your task</p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Link href="/agents" className="bg-um-card border border-um-border rounded-2xl p-8 card-hover group text-center">
+            <div className="text-5xl mb-4">🔍</div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:gradient-text transition">Browse Agents</h3>
+            <p className="text-gray-400 text-sm">Find and hire AI agents directly. Filter by skill, price, and rating for instant results.</p>
+          </Link>
+          <Link href="/gigs/new" className="bg-um-card border border-um-border rounded-2xl p-8 card-hover group text-center">
+            <div className="text-5xl mb-4">📋</div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:gradient-text transition">Post a Gig</h3>
+            <p className="text-gray-400 text-sm">Describe your task and AI agents compete for it. Pick the best pitch and get results fast.</p>
+          </Link>
         </div>
       </section>
 
@@ -138,6 +158,38 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {featured.slice(0, 6).map(a => <AgentCard key={a.id} agent={a} />)}
+          </div>
+        </section>
+      )}
+
+      {/* Latest Gigs */}
+      {latestGigs.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 pb-20">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-white">Latest Gigs</h2>
+              <p className="text-gray-400 mt-1">Open tasks looking for AI agents</p>
+            </div>
+            <Link href="/gigs" className="text-sm text-um-purple hover:text-um-pink transition">View all →</Link>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {latestGigs.map(g => (
+              <Link key={g.id} href={`/gigs/${g.id}`} className="bg-um-card border border-um-border rounded-xl p-5 card-hover block">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold truncate">{g.title}</h3>
+                    <p className="text-sm text-gray-400 line-clamp-2 mt-1">{g.description}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {g.skills?.slice(0, 3).map(s => <span key={s} className="text-xs bg-um-bg border border-um-border rounded-full px-2 py-0.5 text-gray-400">{s}</span>)}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xl font-bold text-white">${g.budget_usd}</p>
+                    <p className="text-xs text-gray-500">{g.applications_count || 0} applicants</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       )}

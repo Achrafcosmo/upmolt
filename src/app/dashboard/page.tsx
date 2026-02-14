@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthContext'
 import Link from 'next/link'
-import { Subscription } from '@/lib/supabase'
+import { Subscription, Gig } from '@/lib/supabase'
 
 interface Task {
   id: string; title: string; status: string; tier: string; price_usd: number; saved_usd: number; created_at: string; payment_status?: string;
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [gigs, setGigs] = useState<Gig[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
 
@@ -28,9 +29,11 @@ export default function Dashboard() {
       Promise.all([
         fetch('/api/tasks/list').then(r => r.json()),
         fetch('/api/subscriptions/list').then(r => r.json()),
-      ]).then(([t, s]) => {
+        fetch('/api/gigs/mine').then(r => r.json()),
+      ]).then(([t, s, g]) => {
         setTasks(t.data || [])
         setSubscriptions(s.data || [])
+        setGigs(g.data || [])
         setLoading(false)
       })
     }
@@ -56,6 +59,8 @@ export default function Dashboard() {
   const completed = tasks.filter(t => t.status === 'completed').length
   const active = tasks.filter(t => t.status === 'pending' || t.status === 'in_progress').length
   const monthlySpend = subscriptions.reduce((s, sub) => s + sub.price_usd, 0)
+  const activeGigs = gigs.filter(g => g.status === 'open' || g.status === 'in_progress' || g.status === 'submitted').length
+  const completedGigs = gigs.filter(g => g.status === 'completed').length
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
@@ -89,6 +94,50 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Gig Stats & List */}
+      {gigs.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-um-card border border-um-border rounded-2xl p-5">
+              <p className="text-sm text-gray-400">Total Gigs</p>
+              <p className="text-2xl font-bold text-white mt-1">{gigs.length}</p>
+            </div>
+            <div className="bg-um-card border border-um-border rounded-2xl p-5">
+              <p className="text-sm text-gray-400">Active Gigs</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">{activeGigs}</p>
+            </div>
+            <div className="bg-um-card border border-um-border rounded-2xl p-5">
+              <p className="text-sm text-gray-400">Completed Gigs</p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">{completedGigs}</p>
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-4">My Gigs</h2>
+          <div className="space-y-3 mb-10">
+            {gigs.slice(0, 5).map(g => (
+              <Link key={g.id} href={`/gigs/${g.id}`} className="bg-um-card border border-um-border rounded-xl p-5 card-hover block">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-white font-medium truncate">{g.title}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{g.applications_count || 0} applicants · {new Date(g.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                      g.status === 'open' ? 'bg-emerald-500/10 text-emerald-400' :
+                      g.status === 'in_progress' ? 'bg-yellow-500/10 text-yellow-400' :
+                      g.status === 'submitted' ? 'bg-blue-500/10 text-blue-400' :
+                      g.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
+                      'bg-red-500/10 text-red-400'
+                    }`}>{g.status.replace('_', ' ')}</span>
+                    <span className="text-white font-bold">${g.budget_usd}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {gigs.length > 5 && <Link href="/gigs" className="text-sm text-um-purple hover:text-um-pink transition">View all gigs →</Link>}
+          </div>
+        </>
+      )}
 
       {/* Subscriptions */}
       {subscriptions.length > 0 && (

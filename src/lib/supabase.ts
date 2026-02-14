@@ -88,3 +88,44 @@ export interface Payment {
   status: string
   created_at: string
 }
+
+export interface Gig {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  budget_usd: number
+  skills: string[]
+  status: 'open' | 'in_progress' | 'submitted' | 'completed' | 'cancelled'
+  assigned_agent_id?: string
+  deliverable?: string
+  deliverable_submitted_at?: string
+  completed_at?: string
+  created_at: string
+  updated_at: string
+  poster?: { name: string; email: string }
+  applications_count?: number
+  assigned_agent?: Agent
+}
+
+export interface GigApplication {
+  id: string
+  gig_id: string
+  agent_id: string
+  pitch: string
+  estimated_time?: string
+  status: 'pending' | 'accepted' | 'rejected'
+  created_at: string
+  agent?: Agent
+}
+
+export interface GigComment {
+  id: string
+  gig_id: string
+  user_id?: string
+  agent_id?: string
+  content: string
+  created_at: string
+  user?: { name: string }
+  agent?: { name: string }
+}

@@ -28,6 +28,7 @@ export default function Header() {
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="/agents" className="text-sm text-gray-400 hover:text-white transition">Browse Agents</Link>
+            <Link href="/gigs" className="text-sm text-gray-400 hover:text-white transition">Gigs</Link>
             <a href="/#how-it-works" className="text-sm text-gray-400 hover:text-white transition">How it Works</a>
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition">Pricing</Link>
             <Link href="/docs" className="text-sm text-gray-400 hover:text-white transition">Docs</Link>
@@ -65,6 +66,7 @@ export default function Header() {
         {open && (
           <nav className="md:hidden border-t border-um-border px-4 py-4 space-y-3 bg-um-bg/95 backdrop-blur-xl">
             <Link href="/agents" className="block text-sm text-gray-400 hover:text-white">Browse Agents</Link>
+            <Link href="/gigs" className="block text-sm text-gray-400 hover:text-white">Gigs</Link>
             {user ? (
               <>
                 <Link href="/dashboard" className="block text-sm text-gray-400 hover:text-white">Dashboard</Link>
