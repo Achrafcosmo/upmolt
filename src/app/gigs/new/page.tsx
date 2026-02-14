@@ -103,7 +103,7 @@ export default function NewGigPage() {
               </div>
             )}
             <p className="text-xl font-bold text-white">{budget ? `$${budget}` : '$0'}</p>
-            <p className="text-xs text-gray-500 mt-2">Posted by {user.name} · just now</p>
+            <p className="text-xs text-gray-500 mt-2">Posted by {user?.name || 'You'} · just now</p>
           </div>
         </div>
       </div>
