@@ -6,6 +6,7 @@ import { Agent, Category, Review } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthContext'
 import AuthModal from '@/components/AuthModal'
 import HireModal from '@/components/HireModal'
+import SubscriptionModal from '@/components/SubscriptionModal'
 
 function Stars({ rating, size = 'sm' }: { rating: number; size?: string }) {
   const s = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'
@@ -22,10 +23,12 @@ export default function AgentProfile() {
   const { slug } = useParams()
   const { user } = useAuth()
   const [agent, setAgent] = useState<Agent & { reviews?: Review[]; category?: Category } | null>(null)
-  const [tab, setTab] = useState<'overview' | 'portfolio' | 'reviews' | 'pricing'>('overview')
+  const [tab, setTab] = useState<'overview' | 'portfolio' | 'reviews' | 'pricing' | 'subscribe'>('overview')
   const [loading, setLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
   const [showHire, setShowHire] = useState(false)
+  const [showSubscribe, setShowSubscribe] = useState(false)
+  const [subInfo, setSubInfo] = useState<{ hasSubscription: boolean; tasksRemaining: number } | null>(null)
 
   useEffect(() => {
     fetch(`/api/agents/${slug}`).then(r => r.json()).then(d => {
@@ -34,9 +37,22 @@ export default function AgentProfile() {
     })
   }, [slug])
 
+  useEffect(() => {
+    if (user && agent) {
+      fetch(`/api/subscriptions/check?agent_id=${agent.id}`).then(r => r.json()).then(d => {
+        if (d.data) setSubInfo(d.data)
+      }).catch(() => {})
+    }
+  }, [user, agent])
+
   function handleHire() {
     if (!user) { setShowAuth(true); return }
     setShowHire(true)
+  }
+
+  function handleSubscribe() {
+    if (!user) { setShowAuth(true); return }
+    setShowSubscribe(true)
   }
 
   if (loading) return <div className="max-w-5xl mx-auto px-4 py-20 text-center text-gray-500">Loading...</div>
@@ -68,6 +84,21 @@ export default function AgentProfile() {
               <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full">
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Online
               </span>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(agent as any).model && (
+                <span className="bg-um-purple/10 text-um-purple text-xs font-medium px-2 py-1 rounded-full">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  ⚡ Powered by {String((agent as any).model).toUpperCase()}
+                </span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(agent as any).system_prompt && (
+                <span className="bg-um-cyan/10 text-um-cyan text-xs font-medium px-2 py-1 rounded-full">🧠 Custom trained</span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(agent as any).knowledge_base && (
+                <span className="bg-um-pink/10 text-um-pink text-xs font-medium px-2 py-1 rounded-full">📚 Knowledge base</span>
+              )}
             </div>
             <p className="text-lg text-gray-400 mb-4">{agent.tagline}</p>
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -99,7 +130,7 @@ export default function AgentProfile() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-um-card rounded-xl p-1 border border-um-border">
-        {(['overview', 'portfolio', 'reviews', 'pricing'] as const).map(t => (
+        {(['overview', 'portfolio', 'reviews', 'pricing', 'subscribe'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition ${tab === t ? 'gradient-btn text-white' : 'text-gray-400 hover:text-white'}`}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
@@ -158,6 +189,44 @@ export default function AgentProfile() {
             </div>
           )}
 
+          {tab === 'subscribe' && (
+            <div className="bg-um-card border border-um-border rounded-2xl p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Subscription Plans</h2>
+              {subInfo?.hasSubscription ? (
+                <div className="bg-um-cyan/10 border border-um-cyan/20 rounded-xl p-5 mb-4">
+                  <p className="text-um-cyan font-bold">✓ Active Subscription</p>
+                  <p className="text-gray-400 text-sm mt-1">{subInfo.tasksRemaining} tasks remaining this month</p>
+                </div>
+              ) : null}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { tier: 'Basic', tasks: 5, discount: 10, icon: '⚡' },
+                  { tier: 'Standard', tasks: 15, discount: 20, icon: '🚀', popular: true },
+                  { tier: 'Premium', tasks: 50, discount: 35, icon: '💎' },
+                ].map(p => {
+                  const price = Math.round(agent.price_usd * p.tasks * (1 - p.discount / 100))
+                  const oneOff = agent.price_usd * p.tasks
+                  return (
+                    <div key={p.tier} className={`border rounded-2xl p-5 ${p.popular ? 'border-um-purple bg-um-purple/5' : 'border-um-border'}`}>
+                      {p.popular && <div className="text-xs text-um-purple font-bold mb-2">BEST VALUE</div>}
+                      <div className="text-2xl mb-2">{p.icon}</div>
+                      <h3 className="text-lg font-bold text-white">{p.tier}</h3>
+                      <p className="text-gray-400 text-sm">{p.tasks} tasks/month</p>
+                      <p className="text-2xl font-bold text-white mt-2">${price}<span className="text-sm text-gray-500">/mo</span></p>
+                      <p className="text-xs text-gray-500">${(price / p.tasks).toFixed(2)}/task</p>
+                      <div className="mt-3 bg-emerald-500/10 rounded-lg px-3 py-2">
+                        <p className="text-emerald-400 text-xs font-bold">Save {p.discount}% (${oneOff - price})</p>
+                      </div>
+                      <button onClick={handleSubscribe} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition ${p.popular ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>
+                        {subInfo?.hasSubscription ? 'Already Subscribed' : 'Subscribe'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {tab === 'pricing' && (
             <div className="bg-um-card border border-um-border rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Pricing</h2>
@@ -196,7 +265,18 @@ export default function AgentProfile() {
               {agent.market_rate_usd > 0 && <span className="text-sm text-gray-600 line-through">${agent.market_rate_usd}</span>}
             </div>
             {saved > 0 && <p className="text-sm text-emerald-400 font-medium mb-4">You save ${saved.toLocaleString()} ({pct}%)</p>}
-            <button onClick={handleHire} className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">Hire This Agent</button>
+            {subInfo?.hasSubscription && subInfo.tasksRemaining > 0 && (
+              <div className="bg-um-cyan/10 border border-um-cyan/20 rounded-xl p-3 mb-3 text-center">
+                <p className="text-um-cyan text-sm font-semibold">{subInfo.tasksRemaining} tasks remaining</p>
+                <p className="text-gray-500 text-xs">from your subscription</p>
+              </div>
+            )}
+            <button onClick={handleHire} className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">
+              {subInfo?.hasSubscription && subInfo.tasksRemaining > 0 ? 'Use Subscription' : 'Hire This Agent'}
+            </button>
+            {!subInfo?.hasSubscription && (
+              <button onClick={handleSubscribe} className="w-full bg-um-bg border border-um-purple/30 text-um-purple hover:text-white py-3 rounded-xl text-sm transition mb-3">📦 Subscribe & Save</button>
+            )}
             <button className="w-full bg-um-bg border border-um-border text-gray-300 hover:text-white py-3 rounded-xl text-sm transition">💬 Ask a Question</button>
             <div className="mt-4 pt-4 border-t border-um-border space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Response time</span><span className="text-white">~{agent.avg_delivery_minutes < 60 ? `${agent.avg_delivery_minutes} min` : `${Math.round(agent.avg_delivery_minutes/60)}h`}</span></div>
@@ -209,6 +289,7 @@ export default function AgentProfile() {
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showHire && agent && <HireModal agent={agent} onClose={() => setShowHire(false)} />}
+      {showSubscribe && agent && <SubscriptionModal agent={agent} onClose={() => setShowSubscribe(false)} onSuccess={() => { fetch(`/api/subscriptions/check?agent_id=${agent.id}`).then(r => r.json()).then(d => { if (d.data) setSubInfo(d.data) }) }} />}
     </div>
   )
 }

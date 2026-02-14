@@ -31,5 +31,13 @@ export async function POST(req: NextRequest) {
   // Update user savings
   await sb.from('um_users').update({ total_saved_usd: (user.total_saved_usd || 0) + saved_usd }).eq('id', user.id)
 
+  // Auto-process task (fire and forget)
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+  fetch(`${baseUrl}/api/tasks/process`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_id: task.id }),
+  }).catch(() => {})
+
   return NextResponse.json({ data: task })
 }

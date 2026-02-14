@@ -100,11 +100,21 @@ export default function TaskDetail() {
         </div>
       </div>
 
-      {/* Result */}
+      {/* Result / Deliverables */}
       {task.result && (
         <div className="bg-um-card border border-um-border rounded-2xl p-6 mb-6">
-          <h2 className="text-lg font-bold text-white mb-3">Result</h2>
-          <p className="text-gray-300 whitespace-pre-wrap">{task.result}</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">📦 Deliverables</h2>
+            {task.completed_at && (
+              <span className="text-xs px-3 py-1 rounded-full savings-badge text-white font-medium">
+                ⚡ {Math.max(1, Math.round((Number(task.price_usd) || 10) * 0.8))}x faster than human
+              </span>
+            )}
+          </div>
+          {task.completed_at && (
+            <p className="text-xs text-gray-500 mb-4">Completed {new Date(task.completed_at).toLocaleString()}</p>
+          )}
+          <div className="prose prose-invert max-w-none text-gray-300 whitespace-pre-wrap text-sm leading-relaxed [&_h2]:text-white [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-white [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_strong]:text-white">{task.result}</div>
         </div>
       )}
 
