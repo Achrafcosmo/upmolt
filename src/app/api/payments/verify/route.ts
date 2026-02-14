@@ -37,7 +37,13 @@ export async function POST(req: NextRequest) {
 
   // Activate subscription if subscription payment
   if (payment.subscription_id) {
-    await sb.from('um_subscriptions').update({ status: 'active' }).eq('id', payment.subscription_id)
+    const now = new Date()
+    const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    await sb.from('um_subscriptions').update({
+      status: 'active',
+      current_period_start: now.toISOString(),
+      current_period_end: end.toISOString(),
+    }).eq('id', payment.subscription_id)
   }
 
   return NextResponse.json({ data: { success: true } })

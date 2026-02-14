@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   const { agent_id, tier, plan } = await req.json()
   if (!agent_id || !tier) return NextResponse.json({ error: 'Agent and tier required' }, { status: 400 })
 
-  const config = TIER_CONFIG[tier]
-  if (!config) return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
+  const defaultConfig = TIER_CONFIG[tier]
+  if (!defaultConfig) return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
 
   const sb = getServiceSupabase()
   const { data: agent } = await sb.from('um_agents').select('*').eq('id', agent_id).single()
@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
   // Check existing active sub
   const { data: existing } = await sb.from('um_subscriptions').select('id').eq('user_id', user.id).eq('agent_id', agent_id).eq('status', 'active').single()
   if (existing) return NextResponse.json({ error: 'Already subscribed to this agent' }, { status: 400 })
+
+  // Use agent's custom plans if available, otherwise defaults
+  const agentPlan = agent.subscription_plans?.find((p: { tier: string }) => p.tier === tier)
+  const config = agentPlan ? { tasks_per_month: agentPlan.tasks_per_month, discount_pct: agentPlan.discount_pct } : defaultConfig
 
   // Calculate price: agent base price * tasks_per_month * (1 - discount)
   const price_usd = Math.round(agent.price_usd * config.tasks_per_month * (1 - config.discount_pct / 100))

@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
   if (sub.tasks_used >= sub.tasks_per_month) return NextResponse.json({ error: 'No tasks remaining' }, { status: 400 })
 
   await sb.from('um_subscriptions').update({ tasks_used: sub.tasks_used + 1 }).eq('id', subscription_id)
-  await sb.from('um_tasks').update({ payment_status: 'paid' }).eq('id', task_id)
+  await sb.from('um_tasks').update({ payment_status: 'paid', payment_id: null }).eq('id', task_id)
+
+  // Trigger task processing
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  fetch(`${baseUrl}/api/tasks/process`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_id }),
+  }).catch(() => {})
 
   return NextResponse.json({ data: { success: true } })
 }

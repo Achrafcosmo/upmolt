@@ -22,6 +22,9 @@ export default function EditAgent() {
   const [skillInput, setSkillInput] = useState('')
   const [price, setPrice] = useState('')
   const [avatar, setAvatar] = useState('🤖')
+  const [subBasicTasks, setSubBasicTasks] = useState('5')
+  const [subStandardTasks, setSubStandardTasks] = useState('15')
+  const [subPremiumTasks, setSubPremiumTasks] = useState('50')
 
   // AI Config
   const [model, setModel] = useState('gpt-4o')
@@ -53,6 +56,15 @@ export default function EditAgent() {
       setOutputFormat(a.output_format || 'markdown')
       setTemperature(a.temperature ?? 0.7)
       setMaxTokens(a.max_tokens || 4096)
+      if (a.subscription_plans?.length) {
+        const plans = a.subscription_plans
+        const basic = plans.find((p: { tier: string }) => p.tier === 'basic')
+        const standard = plans.find((p: { tier: string }) => p.tier === 'standard')
+        const premium = plans.find((p: { tier: string }) => p.tier === 'premium')
+        if (basic) setSubBasicTasks(String(basic.tasks_per_month))
+        if (standard) setSubStandardTasks(String(standard.tasks_per_month))
+        if (premium) setSubPremiumTasks(String(premium.tasks_per_month))
+      }
       setLoading(false)
     })
   }, [id, user, authLoading, router])
@@ -69,6 +81,11 @@ export default function EditAgent() {
       name, tagline, description, skills, price_usd: Number(price), avatar,
       model, system_prompt: systemPrompt, knowledge_base: knowledgeBase,
       output_format: outputFormat, temperature, max_tokens: maxTokens,
+      subscription_plans: [
+        { tier: 'basic', tasks_per_month: Number(subBasicTasks) || 5, discount_pct: 10 },
+        { tier: 'standard', tasks_per_month: Number(subStandardTasks) || 15, discount_pct: 20 },
+        { tier: 'premium', tasks_per_month: Number(subPremiumTasks) || 50, discount_pct: 35 },
+      ],
     }
     if (changeApiKey && apiKey) body.api_key = apiKey
     const res = await fetch(`/api/creator/agents/${id}`, {
@@ -122,6 +139,26 @@ export default function EditAgent() {
         <div>
           <label className="text-sm text-gray-400 mb-2 block">Base Price (USD) *</label>
           <input value={price} onChange={e => setPrice(e.target.value)} type="number" min="1" required className="w-full bg-um-bg border border-um-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-um-purple" />
+        </div>
+
+        {/* Subscription Plans */}
+        <div className="border-t border-um-border pt-6">
+          <h2 className="text-xl font-bold text-white mb-1">📦 Subscription Plans</h2>
+          <p className="text-sm text-gray-500 mb-4">Tasks per month for each tier. Discounts: Basic 10%, Standard 20%, Premium 35%</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">⚡ Basic tasks/mo</label>
+              <input value={subBasicTasks} onChange={e => setSubBasicTasks(e.target.value)} type="number" min="1" className="w-full bg-um-bg border border-um-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-um-purple" />
+            </div>
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">🚀 Standard tasks/mo</label>
+              <input value={subStandardTasks} onChange={e => setSubStandardTasks(e.target.value)} type="number" min="1" className="w-full bg-um-bg border border-um-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-um-purple" />
+            </div>
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">💎 Premium tasks/mo</label>
+              <input value={subPremiumTasks} onChange={e => setSubPremiumTasks(e.target.value)} type="number" min="1" className="w-full bg-um-bg border border-um-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-um-purple" />
+            </div>
+          </div>
         </div>
 
         {/* AI Configuration */}

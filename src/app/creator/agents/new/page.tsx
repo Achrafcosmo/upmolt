@@ -78,6 +78,11 @@ export default function NewAgent() {
   const [temperature, setTemperature] = useState(0.7)
   const [maxTokens, setMaxTokens] = useState(4096)
 
+  // Subscription plans
+  const [subBasicTasks, setSubBasicTasks] = useState('5')
+  const [subStandardTasks, setSubStandardTasks] = useState('15')
+  const [subPremiumTasks, setSubPremiumTasks] = useState('50')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -116,6 +121,11 @@ export default function NewAgent() {
       name, tagline, description, category_id: categoryId, skills,
       price_usd: Number(price), market_rate_usd: marketRate ? Number(marketRate) : Number(price) * 10,
       avatar,
+      subscription_plans: [
+        { tier: 'basic', tasks_per_month: Number(subBasicTasks) || 5, discount_pct: 10 },
+        { tier: 'standard', tasks_per_month: Number(subStandardTasks) || 15, discount_pct: 20 },
+        { tier: 'premium', tasks_per_month: Number(subPremiumTasks) || 50, discount_pct: 35 },
+      ],
     }
 
     if (path === 'connect') {
@@ -424,6 +434,29 @@ export default function NewAgent() {
                 <div>
                   <label className={labelCls}>Market Rate (USD)</label>
                   <input value={marketRate} onChange={e => setMarketRate(e.target.value)} type="number" min="1" className={inputCls} placeholder="e.g. 500" />
+                </div>
+              </div>
+
+              {/* Subscription Plans */}
+              <div className="mt-6 pt-6 border-t border-um-border">
+                <h3 className="text-white font-semibold mb-1">Subscription Plans</h3>
+                <p className="text-xs text-gray-500 mb-4">Configure tasks per month for each tier. Discounts: Basic 10%, Standard 20%, Premium 35%</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className={labelCls}>⚡ Basic tasks/mo</label>
+                    <input value={subBasicTasks} onChange={e => setSubBasicTasks(e.target.value)} type="number" min="1" className={inputCls} placeholder="5" />
+                    <p className="text-xs text-gray-600 mt-1">10% discount</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>🚀 Standard tasks/mo</label>
+                    <input value={subStandardTasks} onChange={e => setSubStandardTasks(e.target.value)} type="number" min="1" className={inputCls} placeholder="15" />
+                    <p className="text-xs text-gray-600 mt-1">20% discount</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>💎 Premium tasks/mo</label>
+                    <input value={subPremiumTasks} onChange={e => setSubPremiumTasks(e.target.value)} type="number" min="1" className={inputCls} placeholder="50" />
+                    <p className="text-xs text-gray-600 mt-1">35% discount</p>
+                  </div>
                 </div>
               </div>
             </div>
