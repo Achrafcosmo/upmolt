@@ -24,8 +24,8 @@ export default function AgentProfile() {
   const [agent, setAgent] = useState<Agent & { reviews?: Review[]; category?: Category } | null>(null)
   const [tab, setTab] = useState<'overview' | 'portfolio' | 'reviews' | 'pricing'>('overview')
   const [loading, setLoading] = useState(true)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [hireOpen, setHireOpen] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [showHire, setShowHire] = useState(false)
 
   useEffect(() => {
     fetch(`/api/agents/${slug}`).then(r => r.json()).then(d => {
@@ -35,8 +35,8 @@ export default function AgentProfile() {
   }, [slug])
 
   function handleHire() {
-    if (!user) { setAuthOpen(true); return }
-    setHireOpen(true)
+    if (!user) { setShowAuth(true); return }
+    setShowHire(true)
   }
 
   if (loading) return <div className="max-w-5xl mx-auto px-4 py-20 text-center text-gray-500">Loading...</div>
@@ -207,8 +207,8 @@ export default function AgentProfile() {
         </div>
       </div>
 
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab="signup" />
-      {agent && <HireModal open={hireOpen} onClose={() => setHireOpen(false)} agent={agent} />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showHire && agent && <HireModal agent={agent} onClose={() => setShowHire(false)} />}
     </div>
   )
 }

@@ -1,52 +1,37 @@
-import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET() {
   const user = await getSession()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const supabase = getServiceSupabase()
-  const { data } = await supabase.from('um_agents').select('*').eq('creator_id', user.id).order('created_at', { ascending: false })
-  return NextResponse.json({ agents: data || [] })
+  if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 })
+  const sb = getServiceSupabase()
+  const { data } = await sb.from('um_agents').select('*').eq('creator_id', user.id).order('created_at', { ascending: false })
+  return NextResponse.json({ data: data || [] })
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const user = await getSession()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 })
 
   const body = await req.json()
-  const { name, tagline, description, category_id, skills, price_usd, avatar, portfolio } = body
-  if (!name || !tagline || !category_id || !price_usd) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  const { name, tagline, description, category_id, skills, price_usd, market_rate_usd, avatar } = body
+  if (!name || !tagline || !category_id || !price_usd) return NextResponse.json({ error: 'Name, tagline, category and price required' }, { status: 400 })
 
-  const supabase = getServiceSupabase()
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36)
 
-  // Ensure creator role
+  const sb = getServiceSupabase()
+  // Ensure user is creator
   if (user.role !== 'creator') {
-    await supabase.from('um_users').update({ role: 'creator' }).eq('id', user.id)
+    await sb.from('um_users').update({ role: 'creator' }).eq('id', user.id)
   }
 
-  // Get category for market rate
-  const { data: cat } = await supabase.from('um_categories').select('market_rate_usd').eq('id', category_id).single()
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-
-  const { data: agent, error } = await supabase.from('um_agents').insert({
-    creator_id: user.id,
-    name,
-    slug: slug + '-' + Date.now().toString(36),
-    tagline,
-    description: description || '',
-    category_id,
-    skills: skills || [],
-    price_usd: Number(price_usd),
-    market_rate_usd: cat?.market_rate_usd || Number(price_usd) * 20,
-    avatar: avatar || '🤖',
-    portfolio: portfolio || [],
-    status: 'active',
-  }).select('*').single()
-
+  const { data, error } = await sb.from('um_agents').insert({
+    creator_id: user.id, name, slug, tagline, description: description || '',
+    category_id, skills: skills || [], price_usd, market_rate_usd: market_rate_usd || price_usd * 10,
+    avatar: avatar || '🤖', status: 'active'
+  }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ agent })
+  return NextResponse.json({ data })
 }
