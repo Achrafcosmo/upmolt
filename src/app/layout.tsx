@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-um-bg text-gray-200 antialiased">
         <AuthProvider>
-          <Header />
+          <Suspense><Header /></Suspense>
           <main className="pt-16 min-h-screen">{children}</main>
           <Footer />
         </AuthProvider>

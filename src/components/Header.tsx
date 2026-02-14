@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from './AuthContext'
 import AuthModal from './AuthModal'
 import NotificationBell from './NotificationBell'
@@ -11,6 +12,12 @@ export default function Header() {
   const [showAuth, setShowAuth] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const auth = searchParams.get('auth')
+    if (auth === 'signin' || auth === 'signup') setShowAuth(true)
+  }, [searchParams])
 
   useEffect(() => {
     function handle(e: MouseEvent) { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false) }
