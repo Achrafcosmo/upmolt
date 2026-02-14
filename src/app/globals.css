@@ -3,12 +3,25 @@
 @tailwind utilities;
 
 body {
-  background-color: #0a0a0b;
+  background-color: #0A0E1A;
   color: #e5e7eb;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60vh;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(204,51,51,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #8b5cf6, #d946ef, #06b6d4);
+  background: linear-gradient(135deg, #CC3333, #E85D4A);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -16,15 +29,15 @@ body {
 
 .gradient-border {
   border: 1px solid transparent;
-  background: linear-gradient(#141416, #141416) padding-box,
-              linear-gradient(135deg, #8b5cf6, #d946ef) border-box;
+  background: linear-gradient(#111827, #111827) padding-box,
+              linear-gradient(135deg, #CC3333, #991B1B) border-box;
 }
 
 .gradient-btn {
-  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  background: linear-gradient(135deg, #CC3333, #E85D4A);
 }
 .gradient-btn:hover {
-  background: linear-gradient(135deg, #7c3aed, #c026d3);
+  background: linear-gradient(135deg, #B22222, #CC3333);
 }
 
 .savings-badge {
@@ -36,7 +49,7 @@ body {
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 20px 40px rgba(204, 51, 51, 0.1);
 }
 
 @keyframes float {
@@ -45,8 +58,8 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.4); }
+  0%, 100% { box-shadow: 0 0 20px rgba(204, 51, 51, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(204, 51, 51, 0.4); }
 }
 
 .animate-float { animation: float 3s ease-in-out infinite; }
@@ -55,3 +68,29 @@ body {
 /* Star rating */
 .star { color: #374151; }
 .star.filled { color: #fbbf24; }
+
+/* Starfield */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.2) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+  animation: twinkle 4s ease-in-out infinite;
+}

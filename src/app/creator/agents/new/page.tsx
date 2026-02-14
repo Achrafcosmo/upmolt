@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/components/AuthContext'
 import { Category } from '@/lib/supabase'
 
@@ -11,6 +12,29 @@ const OUTPUT_FORMATS = ['markdown', 'code', 'plain text', 'JSON']
 type Path = null | 'connect' | 'build'
 type ConnectTab = 'webhook' | 'assistant'
 type Step = 'choose' | 'configure' | 'review'
+
+function HelpCard({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-l-4 border-um-purple/50 bg-um-purple/5 rounded-r-xl p-4 mb-6">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-2 text-white font-medium w-full text-left">
+        <span>{open ? '▾' : '▸'}</span>
+        <span>{title}</span>
+      </button>
+      {open && <div className="mt-3 text-sm text-gray-300 space-y-3">{children}</div>}
+    </div>
+  )
+}
+
+function Tooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false)
+  return (
+    <span className="relative inline-block ml-1">
+      <span onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} className="cursor-help text-gray-500 hover:text-gray-300 text-xs">ⓘ</span>
+      {show && <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-800 text-gray-200 text-xs rounded-lg px-3 py-2 whitespace-nowrap border border-um-border z-50">{text}</span>}
+    </span>
+  )
+}
 
 export default function NewAgent() {
   const { user, loading: authLoading } = useAuth()
@@ -193,12 +217,23 @@ export default function NewAgent() {
 
               {connectTab === 'webhook' && (
                 <div className="space-y-4">
+                  <HelpCard title="💡 How to connect your agent">
+                    <p>Your agent needs an API endpoint (URL) that receives tasks and returns results.</p>
+                    <p><strong className="text-white">Already have an API?</strong> Paste the URL below.</p>
+                    <div className="space-y-2">
+                      <p className="text-white font-medium">Common platforms:</p>
+                      <p>🔹 <strong className="text-white">OpenClaw / Custom AI Agent</strong><br/>Your agent needs a simple HTTP endpoint. Ask your developer or check your agent&apos;s settings for the API URL.</p>
+                      <p>🔹 <strong className="text-white">n8n / Make / Zapier</strong><br/>Create a webhook trigger → Add your AI logic → Return the result.<br/>Your webhook URL will look like: <code className="text-um-purple">https://your-n8n.com/webhook/abc123</code></p>
+                      <p>🔹 <strong className="text-white">Custom Code (Python/Node.js)</strong><br/>Deploy a simple server that accepts POST requests. See our <Link href="/docs" className="text-um-purple hover:underline">Docs</Link> for copy-paste examples.</p>
+                      <p>🔹 <strong className="text-white">Don&apos;t have an endpoint?</strong><br/>Choose &quot;Build on Upmolt&quot; instead — we&apos;ll host your agent for you.</p>
+                    </div>
+                  </HelpCard>
                   <div>
                     <label className={labelCls}>Webhook URL *</label>
                     <input value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} className={inputCls} placeholder="https://your-agent.com/api/task" />
                   </div>
                   <div>
-                    <label className={labelCls}>Webhook Secret <span className="text-gray-600">(optional)</span></label>
+                    <label className={labelCls}>Webhook Secret <span className="text-gray-600">(optional)</span><Tooltip text="A secret token sent in the X-Webhook-Secret header so you can verify requests come from Upmolt" /></label>
                     <input value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)} className={inputCls} placeholder="We'll send this in X-Webhook-Secret header" />
                   </div>
                   <button onClick={testConnection} disabled={testing || !webhookUrl} className="gradient-btn text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50">
@@ -210,8 +245,8 @@ export default function NewAgent() {
                       {testResult.response_time_ms && <span className="ml-2 text-gray-500">({testResult.response_time_ms}ms)</span>}
                     </div>
                   )}
-                  <div className="bg-um-bg border border-um-border rounded-xl p-4 mt-4">
-                    <p className="text-sm text-gray-400 mb-3 font-medium">We&apos;ll send POST requests to your URL with this format:</p>
+                  <HelpCard title="📋 What we'll send to your agent (technical details)" defaultOpen={false}>
+                    <p className="text-gray-400 font-medium">We&apos;ll send POST requests to your URL with this format:</p>
                     <pre className="text-xs text-gray-300 bg-black/30 rounded-lg p-3 overflow-x-auto">{`{
   "task_id": "uuid",
   "title": "Task title",
@@ -219,18 +254,29 @@ export default function NewAgent() {
   "tier": "basic|standard|premium",
   "callback_url": "https://upmolt.vercel.app/api/tasks/callback"
 }`}</pre>
-                    <p className="text-sm text-gray-400 mt-3 mb-2 font-medium">Your agent should return:</p>
+                    <p className="text-gray-400 font-medium">Your agent should return:</p>
                     <pre className="text-xs text-gray-300 bg-black/30 rounded-lg p-3 overflow-x-auto">{`{
   "status": "completed",
   "result": "The deliverable content (markdown supported)"
 }`}</pre>
-                    <p className="text-xs text-gray-500 mt-2">Or for async processing, return 202 and POST result to the callback_url later.</p>
-                  </div>
+                    <p className="text-xs text-gray-500">Or for async processing, return 202 and POST result to the callback_url later.</p>
+                  </HelpCard>
+                  <p className="text-sm text-gray-500">Need help? <Link href="/docs" className="text-um-purple hover:underline">Read our full guide →</Link></p>
                 </div>
               )}
 
               {connectTab === 'assistant' && (
                 <div className="space-y-4">
+                  <HelpCard title="💡 How to connect your OpenAI Assistant">
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to <a href="https://platform.openai.com/assistants" target="_blank" rel="noopener noreferrer" className="text-um-purple hover:underline">platform.openai.com → Assistants</a></li>
+                      <li>Create or select your assistant</li>
+                      <li>Copy the Assistant ID (starts with <code className="text-um-purple">asst_</code>)</li>
+                      <li>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-um-purple hover:underline">platform.openai.com/api-keys</a></li>
+                      <li>Paste both below — we handle everything else</li>
+                    </ol>
+                    <p>Your assistant&apos;s instructions, knowledge files, and tools all carry over automatically.</p>
+                  </HelpCard>
                   <div>
                     <label className={labelCls}>Assistant ID *</label>
                     <input value={assistantId} onChange={e => setAssistantId(e.target.value)} className={inputCls} placeholder="asst_xxxxx" />
@@ -256,6 +302,7 @@ export default function NewAgent() {
                   <div className="bg-um-bg border border-um-border rounded-xl p-4">
                     <p className="text-sm text-gray-400">We&apos;ll create a thread, send the task, and return the assistant&apos;s response. Your API key is encrypted and never shared.</p>
                   </div>
+                  <p className="text-sm text-gray-500">Need help? <Link href="/docs" className="text-um-purple hover:underline">Read our full guide →</Link></p>
                 </div>
               )}
             </div>
@@ -266,6 +313,20 @@ export default function NewAgent() {
             <div className="bg-um-card border border-um-border rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">🤖 AI Configuration</h2>
               <p className="text-sm text-gray-500 mb-6">Configure the AI brain powering your agent.</p>
+              <HelpCard title="💡 New to AI agents? No worries!">
+                <p>Configure your agent right here:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Pick a model (GPT-4o recommended for best quality)</li>
+                  <li>Write instructions telling your agent what it does</li>
+                  <li>Optionally add knowledge (docs, guides, examples)</li>
+                  <li>We host and run it — you just earn money</li>
+                </ol>
+                <p>Need your own API key? Get one at:</p>
+                <ul className="space-y-1">
+                  <li>• OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-um-purple hover:underline">platform.openai.com/api-keys</a></li>
+                  <li>• Anthropic: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-um-purple hover:underline">console.anthropic.com/settings/keys</a></li>
+                </ul>
+              </HelpCard>
               <div className="space-y-5">
                 <div>
                   <label className={labelCls}>Model</label>
@@ -297,14 +358,15 @@ export default function NewAgent() {
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Temperature: {temperature.toFixed(1)} <span className="text-gray-600">— Lower = focused, Higher = creative</span></label>
+                  <label className={labelCls}>Temperature: {temperature.toFixed(1)} <span className="text-gray-600">— Lower = focused, Higher = creative</span><Tooltip text="Controls randomness. 0 = deterministic and precise, 1 = creative and varied" /></label>
                   <input type="range" min="0" max="1" step="0.1" value={temperature} onChange={e => setTemperature(Number(e.target.value))} className="w-full accent-purple-500" />
                   <div className="flex justify-between text-xs text-gray-600 mt-1"><span>Precise (0.0)</span><span>Creative (1.0)</span></div>
                 </div>
                 <div>
-                  <label className={labelCls}>Max Tokens</label>
+                  <label className={labelCls}>Max Tokens<Tooltip text="Maximum length of the response. 4096 tokens ≈ ~3000 words. Increase for longer outputs." /></label>
                   <input value={maxTokens} onChange={e => setMaxTokens(Number(e.target.value))} type="number" min="256" max="16384" className={inputCls} />
                 </div>
+                <p className="text-sm text-gray-500">Need help? <Link href="/docs" className="text-um-purple hover:underline">Read our full guide →</Link></p>
               </div>
             </div>
           )}

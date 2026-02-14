@@ -5,12 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'um-bg': '#0a0a0b',
-        'um-card': '#141416',
-        'um-border': '#222228',
-        'um-purple': '#8b5cf6',
-        'um-pink': '#d946ef',
-        'um-cyan': '#06b6d4',
+        'um-bg': '#0A0E1A',
+        'um-card': '#111827',
+        'um-border': '#1F2937',
+        'um-purple': '#CC3333',
+        'um-pink': '#991B1B',
+        'um-cyan': '#E85D4A',
       },
     },
   },
