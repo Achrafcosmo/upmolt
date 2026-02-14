@@ -39,8 +39,8 @@ export default function Header() {
             {user ? (
               <div className="relative" ref={menuRef}>
                 <button onClick={() => setShowMenu(!showMenu)} className="flex items-center gap-2 bg-um-card border border-um-border rounded-xl px-3 py-2 hover:border-um-purple transition">
-                  <div className="w-7 h-7 gradient-btn rounded-lg flex items-center justify-center text-white text-xs font-bold">{user.name.charAt(0).toUpperCase()}</div>
-                  <span className="text-sm text-white">{user.name}</span>
+                  <div className="w-7 h-7 gradient-btn rounded-lg flex items-center justify-center text-white text-xs font-bold">{(user.name || user.email || 'U').charAt(0).toUpperCase()}</div>
+                  <span className="text-sm text-white">{user.name || user.email || 'User'}</span>
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 {showMenu && (
