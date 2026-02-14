@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Agent, Category, Review } from '@/lib/supabase'
+import { useAuth } from '@/components/AuthContext'
+import AuthModal from '@/components/AuthModal'
+import HireModal from '@/components/HireModal'
 
 function Stars({ rating, size = 'sm' }: { rating: number; size?: string }) {
   const s = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'
@@ -17,9 +20,12 @@ function Stars({ rating, size = 'sm' }: { rating: number; size?: string }) {
 
 export default function AgentProfile() {
   const { slug } = useParams()
+  const { user } = useAuth()
   const [agent, setAgent] = useState<Agent & { reviews?: Review[]; category?: Category } | null>(null)
   const [tab, setTab] = useState<'overview' | 'portfolio' | 'reviews' | 'pricing'>('overview')
   const [loading, setLoading] = useState(true)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [hireOpen, setHireOpen] = useState(false)
 
   useEffect(() => {
     fetch(`/api/agents/${slug}`).then(r => r.json()).then(d => {
@@ -27,6 +33,11 @@ export default function AgentProfile() {
       setLoading(false)
     })
   }, [slug])
+
+  function handleHire() {
+    if (!user) { setAuthOpen(true); return }
+    setHireOpen(true)
+  }
 
   if (loading) return <div className="max-w-5xl mx-auto px-4 py-20 text-center text-gray-500">Loading...</div>
   if (!agent) return <div className="max-w-5xl mx-auto px-4 py-20 text-center"><p className="text-gray-500 text-lg">Agent not found</p><Link href="/agents" className="text-um-purple mt-4 inline-block">← Browse agents</Link></div>
@@ -37,7 +48,6 @@ export default function AgentProfile() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
-      {/* Back */}
       <Link href="/agents" className="text-sm text-gray-500 hover:text-white transition mb-6 inline-block">← Back to agents</Link>
 
       {/* Hero */}
@@ -70,7 +80,6 @@ export default function AgentProfile() {
           </div>
         </div>
 
-        {/* Savings banner */}
         {saved > 0 && (
           <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -88,7 +97,7 @@ export default function AgentProfile() {
         )}
       </div>
 
-      {/* Tabs + Content */}
+      {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-um-card rounded-xl p-1 border border-um-border">
         {(['overview', 'portfolio', 'reviews', 'pricing'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition ${tab === t ? 'gradient-btn text-white' : 'text-gray-400 hover:text-white'}`}>
@@ -107,9 +116,7 @@ export default function AgentProfile() {
                 <div className="mt-6">
                   <h3 className="text-sm font-semibold text-gray-400 mb-3">Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {agent.skills.map(s => (
-                      <span key={s} className="bg-um-bg border border-um-border text-gray-300 text-xs px-3 py-1.5 rounded-lg">{s}</span>
-                    ))}
+                    {agent.skills.map(s => <span key={s} className="bg-um-bg border border-um-border text-gray-300 text-xs px-3 py-1.5 rounded-lg">{s}</span>)}
                   </div>
                 </div>
               )}
@@ -121,16 +128,14 @@ export default function AgentProfile() {
               <h2 className="text-xl font-bold text-white mb-4">Portfolio</h2>
               {agent.portfolio?.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
-                  {agent.portfolio.map((p: { title?: string; description?: string }, i: number) => (
+                  {agent.portfolio.map((p, i) => (
                     <div key={i} className="bg-um-bg border border-um-border rounded-xl p-4">
                       <h3 className="text-sm font-medium text-white">{p.title || `Project ${i+1}`}</h3>
                       <p className="text-xs text-gray-500 mt-1">{p.description || ''}</p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-gray-500">No portfolio items yet.</p>
-              )}
+              ) : <p className="text-gray-500">No portfolio items yet.</p>}
             </div>
           )}
 
@@ -149,9 +154,7 @@ export default function AgentProfile() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-gray-500">No reviews yet.</p>
-              )}
+              ) : <p className="text-gray-500">No reviews yet.</p>}
             </div>
           )}
 
@@ -176,7 +179,7 @@ export default function AgentProfile() {
                         </li>
                       ))}
                     </ul>
-                    <button className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition ${p.tier === 'Standard' ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>Select</button>
+                    <button onClick={handleHire} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition ${p.tier === 'Standard' ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>Select</button>
                   </div>
                 ))}
               </div>
@@ -184,7 +187,7 @@ export default function AgentProfile() {
           )}
         </div>
 
-        {/* Sidebar CTA */}
+        {/* Sidebar */}
         <div className="md:col-span-1">
           <div className="bg-um-card border border-um-border rounded-2xl p-6 sticky top-24">
             <p className="text-sm text-gray-400 mb-1">Starting at</p>
@@ -193,7 +196,7 @@ export default function AgentProfile() {
               {agent.market_rate_usd > 0 && <span className="text-sm text-gray-600 line-through">${agent.market_rate_usd}</span>}
             </div>
             {saved > 0 && <p className="text-sm text-emerald-400 font-medium mb-4">You save ${saved.toLocaleString()} ({pct}%)</p>}
-            <button className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">Hire This Agent</button>
+            <button onClick={handleHire} className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">Hire This Agent</button>
             <button className="w-full bg-um-bg border border-um-border text-gray-300 hover:text-white py-3 rounded-xl text-sm transition">💬 Ask a Question</button>
             <div className="mt-4 pt-4 border-t border-um-border space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Response time</span><span className="text-white">~{agent.avg_delivery_minutes < 60 ? `${agent.avg_delivery_minutes} min` : `${Math.round(agent.avg_delivery_minutes/60)}h`}</span></div>
@@ -203,6 +206,9 @@ export default function AgentProfile() {
           </div>
         </div>
       </div>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab="signup" />
+      {agent && <HireModal open={hireOpen} onClose={() => setHireOpen(false)} agent={agent} />}
     </div>
   )
 }
