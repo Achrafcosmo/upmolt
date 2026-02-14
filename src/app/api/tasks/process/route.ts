@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { createNotification } from '@/lib/notifications'
-import { runAgent } from '@/lib/ai-agent'
+import { runAgent, runWebhookAgent, runOpenAIAssistant } from '@/lib/ai-agent'
+import { decrypt } from '@/lib/encryption'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -24,8 +25,32 @@ export async function POST(req: Request) {
   let deliverable: string
   let status = 'completed'
 
-  if (agent?.api_key_encrypted) {
-    // Real AI processing
+  const connectionType = agent?.connection_type || 'hosted'
+  const taskInput = { task_id: task.id, title: task.title, description: task.description || '', tier: task.tier || 'basic' }
+
+  if (connectionType === 'webhook' && agent?.webhook_url) {
+    try {
+      const secret = agent.webhook_secret ? decrypt(agent.webhook_secret) : null
+      deliverable = await runWebhookAgent(agent.webhook_url, secret, taskInput)
+      if (deliverable === '__ASYNC_PROCESSING__') {
+        // Agent will callback later — leave as in_progress
+        return NextResponse.json({ task: { ...task, status: 'in_progress' } })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown webhook error'
+      deliverable = `## ❌ Webhook Error\n\n${msg}`
+      status = 'failed'
+    }
+  } else if (connectionType === 'assistant' && agent?.assistant_id && agent?.api_key_encrypted) {
+    try {
+      const apiKey = decrypt(agent.api_key_encrypted)
+      deliverable = await runOpenAIAssistant(apiKey, agent.assistant_id, taskInput)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown assistant error'
+      deliverable = `## ❌ Assistant Error\n\n${msg}`
+      status = 'failed'
+    }
+  } else if (agent?.api_key_encrypted) {
     try {
       deliverable = await runAgent({
         model: agent.model || 'gpt-4o',
@@ -35,11 +60,7 @@ export async function POST(req: Request) {
         output_format: agent.output_format || 'markdown',
         temperature: agent.temperature ?? 0.7,
         max_tokens: agent.max_tokens || 4096,
-      }, {
-        title: task.title,
-        description: task.description || '',
-        tier: task.tier || 'basic',
-      })
+      }, taskInput)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown AI error'
       deliverable = `## ❌ AI Processing Error\n\n${msg}\n\nPlease contact the agent creator to verify their API key configuration.`

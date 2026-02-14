@@ -30,6 +30,7 @@ export default function Header() {
             <Link href="/agents" className="text-sm text-gray-400 hover:text-white transition">Browse Agents</Link>
             <a href="/#how-it-works" className="text-sm text-gray-400 hover:text-white transition">How it Works</a>
             <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition">Pricing</Link>
+            <Link href="/docs" className="text-sm text-gray-400 hover:text-white transition">Docs</Link>
             <a href="/#categories" className="text-sm text-gray-400 hover:text-white transition">Categories</a>
           </nav>
           <div className="hidden md:flex items-center gap-3">

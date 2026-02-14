@@ -1,5 +1,72 @@
 import { decrypt } from './encryption';
 
+interface TaskInput {
+  task_id?: string;
+  title: string;
+  description: string;
+  tier: string;
+}
+
+export async function runWebhookAgent(webhookUrl: string, webhookSecret: string | null, task: TaskInput): Promise<string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (webhookSecret) headers['X-Webhook-Secret'] = webhookSecret;
+
+  const res = await fetch(webhookUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      task_id: task.task_id,
+      title: task.title,
+      description: task.description,
+      tier: task.tier,
+      callback_url: 'https://upmolt.vercel.app/api/tasks/callback',
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+  if (res.status === 202) return '__ASYNC_PROCESSING__';
+
+  const data = await res.json();
+  return data.result || data.content || JSON.stringify(data);
+}
+
+export async function runOpenAIAssistant(apiKey: string, assistantId: string, task: TaskInput): Promise<string> {
+  const threadRes = await fetch('https://api.openai.com/v1/threads', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'OpenAI-Beta': 'assistants=v2' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: `Task: ${task.title}\n\nDetails: ${task.description}\n\nTier: ${task.tier}` }] }),
+  });
+  const thread = await threadRes.json();
+
+  const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'OpenAI-Beta': 'assistants=v2' },
+    body: JSON.stringify({ assistant_id: assistantId }),
+  });
+  const run = await runRes.json();
+
+  let status = run.status;
+  let attempts = 0;
+  while (status !== 'completed' && status !== 'failed' && attempts < 60) {
+    await new Promise(r => setTimeout(r, 2000));
+    const checkRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'OpenAI-Beta': 'assistants=v2' },
+    });
+    const checkData = await checkRes.json();
+    status = checkData.status;
+    attempts++;
+  }
+
+  if (status !== 'completed') throw new Error(`Assistant run ${status}`);
+
+  const msgsRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'OpenAI-Beta': 'assistants=v2' },
+  });
+  const msgs = await msgsRes.json();
+  const lastMsg = msgs.data[0];
+  return lastMsg.content[0]?.text?.value || 'No response from assistant';
+}
+
 interface AgentConfig {
   model: string;
   api_key_encrypted: string;
@@ -8,12 +75,6 @@ interface AgentConfig {
   output_format: string;
   temperature: number;
   max_tokens: number;
-}
-
-interface TaskInput {
-  title: string;
-  description: string;
-  tier: string;
 }
 
 export async function runAgent(config: AgentConfig, task: TaskInput): Promise<string> {

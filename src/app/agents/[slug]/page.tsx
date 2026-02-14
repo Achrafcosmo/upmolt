@@ -85,7 +85,19 @@ export default function AgentProfile() {
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> Online
               </span>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(agent as any).model && (
+              {(agent as any).connection_type === 'webhook' && (
+                <span className="bg-blue-500/10 text-blue-400 text-xs font-medium px-2 py-1 rounded-full">🔗 Custom Agent</span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(agent as any).connection_type === 'assistant' && (
+                <span className="bg-amber-500/10 text-amber-400 text-xs font-medium px-2 py-1 rounded-full">⚡ OpenAI Assistant</span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {((agent as any).connection_type === 'hosted' || !(agent as any).connection_type) && (
+                <span className="bg-emerald-500/10 text-emerald-400 text-xs font-medium px-2 py-1 rounded-full">🏠 Hosted on Upmolt</span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(agent as any).model && (agent as any).connection_type === 'hosted' && (
                 <span className="bg-um-purple/10 text-um-purple text-xs font-medium px-2 py-1 rounded-full">
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   ⚡ Powered by {String((agent as any).model).toUpperCase()}

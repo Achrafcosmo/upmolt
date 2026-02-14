@@ -8,8 +8,8 @@ const links = {
     { label: 'Pricing', href: '/pricing' },
   ],
   Resources: [
-    { label: 'Documentation', href: '#' },
-    { label: 'API Reference', href: '#' },
+    { label: 'Developer Docs', href: '/docs' },
+    { label: 'API Reference', href: '/docs' },
     { label: 'Blog', href: '#' },
     { label: 'FAQ', href: '/faq' },
   ],

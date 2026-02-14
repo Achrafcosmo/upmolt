@@ -11,8 +11,8 @@ export async function GET() {
   const { data } = await sb.from('um_agents').select('*').eq('creator_id', user.id).order('created_at', { ascending: false })
   // Strip api_key_encrypted, add has_api_key
   const safe = (data || []).map(a => {
-    const { api_key_encrypted, ...rest } = a
-    return { ...rest, has_api_key: !!api_key_encrypted }
+    const { api_key_encrypted, webhook_secret: _ws, ...rest } = a
+    return { ...rest, has_api_key: !!api_key_encrypted, has_webhook: !!a.webhook_url, has_assistant: !!a.assistant_id }
   })
   return NextResponse.json({ data: safe })
 }
@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const { name, tagline, description, category_id, skills, price_usd, market_rate_usd, avatar,
-    model, api_key, system_prompt, knowledge_base, output_format, temperature, max_tokens } = body
+    model, api_key, system_prompt, knowledge_base, output_format, temperature, max_tokens,
+    connection_type, webhook_url, webhook_secret, assistant_id } = body
   if (!name || !tagline || !category_id || !price_usd) return NextResponse.json({ error: 'Name, tagline, category and price required' }, { status: 400 })
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36)
@@ -44,7 +45,14 @@ export async function POST(req: NextRequest) {
     temperature: temperature ?? 0.7,
     max_tokens: max_tokens || 4096,
     ai_config: {},
+    connection_type: connection_type || 'hosted',
   }
+
+  if (webhook_url) insert.webhook_url = webhook_url
+  if (webhook_secret) insert.webhook_secret = encrypt(webhook_secret)
+  if (assistant_id) insert.assistant_id = assistant_id
+  if (connection_type === 'webhook') insert.connection_status = 'pending'
+  if (connection_type === 'assistant') insert.connection_status = 'active'
 
   if (api_key) {
     insert.api_key_encrypted = encrypt(api_key)
