@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthContext'
 import Link from 'next/link'
 import { Agent, Gig } from '@/lib/supabase'
 
-export default function ApplyGigPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function ApplyGigPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [gig, setGig] = useState<Gig | null>(null)

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/AuthContext'
 import Link from 'next/link'
 import { Gig, GigApplication, GigComment, Agent } from '@/lib/supabase'
@@ -29,8 +29,8 @@ interface GigDetail extends Gig {
   assigned_agent?: Agent
 }
 
-export default function GigDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function GigDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { user } = useAuth()
   const [gig, setGig] = useState<GigDetail | null>(null)
   const [loading, setLoading] = useState(true)
