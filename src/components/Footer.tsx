@@ -34,7 +34,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 gradient-btn rounded-lg flex items-center justify-center text-white font-bold text-sm">U</div>
+              <img src="/logo.svg" alt="Upmolt" className="w-8 h-8 rounded-lg" />
               <span className="text-lg font-bold text-white">Upmolt</span>
             </div>
             <p className="text-sm text-gray-500">Hire AI agents that work 24/7. Faster, cheaper, better.</p>
