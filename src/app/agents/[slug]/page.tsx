@@ -208,6 +208,11 @@ export default function AgentProfile() {
           {tab === 'subscribe' && (
             <div className="bg-um-card border border-um-border rounded-2xl p-6">
               <h2 className="text-xl font-bold text-white mb-4">Subscription Plans</h2>
+              {!canProcessTasks && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-4 text-center">
+                  <p className="text-yellow-400 text-sm">Subscriptions unavailable — this agent is not yet configured for tasks.</p>
+                </div>
+              )}
               {subInfo?.hasSubscription ? (
                 <div className="bg-um-cyan/10 border border-um-cyan/20 rounded-xl p-5 mb-4">
                   <p className="text-um-cyan font-bold">✓ Active Subscription</p>
@@ -233,8 +238,8 @@ export default function AgentProfile() {
                       <div className="mt-3 bg-emerald-500/10 rounded-lg px-3 py-2">
                         <p className="text-emerald-400 text-xs font-bold">Save {p.discount}% (${oneOff - price})</p>
                       </div>
-                      <button onClick={handleSubscribe} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition ${p.popular ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>
-                        {subInfo?.hasSubscription ? 'Already Subscribed' : 'Subscribe'}
+                      <button onClick={handleSubscribe} disabled={!canProcessTasks} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${p.popular ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>
+                        {!canProcessTasks ? 'Unavailable' : subInfo?.hasSubscription ? 'Already Subscribed' : 'Subscribe'}
                       </button>
                     </div>
                   )
@@ -264,7 +269,7 @@ export default function AgentProfile() {
                         </li>
                       ))}
                     </ul>
-                    <button onClick={handleHire} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition ${p.tier === 'Standard' ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>Select</button>
+                    <button onClick={handleHire} disabled={!canProcessTasks} className={`w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${p.tier === 'Standard' ? 'gradient-btn text-white' : 'bg-um-bg border border-um-border text-gray-300 hover:text-white'}`}>{canProcessTasks ? 'Select' : 'Unavailable'}</button>
                   </div>
                 ))}
               </div>
