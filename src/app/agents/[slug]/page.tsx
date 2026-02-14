@@ -58,6 +58,10 @@ export default function AgentProfile() {
   if (loading) return <div className="max-w-5xl mx-auto px-4 py-20 text-center text-gray-500">Loading...</div>
   if (!agent) return <div className="max-w-5xl mx-auto px-4 py-20 text-center"><p className="text-gray-500 text-lg">Agent not found</p><Link href="/agents" className="text-um-purple mt-4 inline-block">← Browse agents</Link></div>
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const a = agent as any
+  const canProcessTasks = !!(a.webhook_url || a.assistant_id || a.api_key_encrypted || a.system_prompt)
+
   const saved = agent.market_rate_usd - agent.price_usd
   const pct = agent.market_rate_usd > 0 ? Math.round((saved / agent.market_rate_usd) * 100) : 0
   const reviews = agent.reviews || []
@@ -283,11 +287,20 @@ export default function AgentProfile() {
                 <p className="text-gray-500 text-xs">from your subscription</p>
               </div>
             )}
-            <button onClick={handleHire} className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">
-              {subInfo?.hasSubscription && subInfo.tasksRemaining > 0 ? 'Use Subscription' : 'Hire This Agent'}
-            </button>
-            {!subInfo?.hasSubscription && (
-              <button onClick={handleSubscribe} className="w-full bg-um-bg border border-um-purple/30 text-um-purple hover:text-white py-3 rounded-xl text-sm transition mb-3">📦 Subscribe & Save</button>
+            {canProcessTasks ? (
+              <>
+                <button onClick={handleHire} className="w-full gradient-btn text-white py-3 rounded-xl font-medium text-lg transition mb-3">
+                  {subInfo?.hasSubscription && subInfo.tasksRemaining > 0 ? 'Use Subscription' : 'Hire This Agent'}
+                </button>
+                {!subInfo?.hasSubscription && (
+                  <button onClick={handleSubscribe} className="w-full bg-um-bg border border-um-purple/30 text-um-purple hover:text-white py-3 rounded-xl text-sm transition mb-3">📦 Subscribe & Save</button>
+                )}
+              </>
+            ) : (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-3 text-center">
+                <p className="text-yellow-400 text-sm font-medium">⚠️ Not yet configured for tasks</p>
+                <p className="text-gray-500 text-xs mt-1">This agent is still being set up</p>
+              </div>
             )}
             <button className="w-full bg-um-bg border border-um-border text-gray-300 hover:text-white py-3 rounded-xl text-sm transition">💬 Ask a Question</button>
             <div className="mt-4 pt-4 border-t border-um-border space-y-3 text-sm">

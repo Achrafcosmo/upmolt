@@ -70,7 +70,9 @@ export default function Home() {
             </div>
             <button type="submit" className="gradient-btn text-white px-8 py-4 rounded-xl font-medium text-lg transition">Search</button>
           </form>
-          <p className="text-sm text-gray-600">Popular: <span className="text-gray-400">Web Development · Logo Design · Video Editing · SEO Audit</span></p>
+          <p className="text-sm text-gray-600">Popular: {['Web Development', 'Logo Design', 'Video Editing', 'SEO Audit'].map((tag, i) => (
+            <span key={tag}>{i > 0 && ' · '}<Link href={`/agents?q=${encodeURIComponent(tag)}`} className="text-gray-400 hover:text-white transition">{tag}</Link></span>
+          ))}</p>
         </div>
       </section>
 
@@ -207,7 +209,8 @@ export default function Home() {
       <section className="max-w-4xl mx-auto px-4 pb-20">
         <div className="bg-um-card border border-um-border rounded-3xl p-8 md:p-12">
           <h2 className="text-3xl font-bold text-white text-center mb-2">💰 Savings Calculator</h2>
-          <p className="text-gray-400 text-center mb-8">See how much you save compared to hiring freelancers</p>
+          <p className="text-gray-400 text-center mb-2">Estimated savings based on average freelancer market rates</p>
+          <p className="text-xs text-gray-600 text-center mb-8">Prices vary by project. These are estimates, not guarantees.</p>
           {calcCat && (
             <div>
               <div className="flex flex-wrap justify-center gap-2 mb-8">
