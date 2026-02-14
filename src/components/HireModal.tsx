@@ -54,10 +54,18 @@ export default function HireModal({ agent, onClose }: { agent: Agent; onClose: (
       setSuccess(true)
       setLoading(false)
     } else {
-      setTaskData(d.data)
-      setSavedAmount(saved)
-      setShowPayment(true)
-      setLoading(false)
+      // For MVP: skip payment if no wallet extension detected
+      const hasWallet = typeof window !== 'undefined' && (window.solana || window.solflare)
+      if (!hasWallet) {
+        setSavedAmount(saved)
+        setSuccess(true)
+        setLoading(false)
+      } else {
+        setTaskData(d.data)
+        setSavedAmount(saved)
+        setShowPayment(true)
+        setLoading(false)
+      }
     }
   }
 

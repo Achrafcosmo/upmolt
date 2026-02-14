@@ -26,7 +26,10 @@ export default function TaskDetail() {
 
   useEffect(() => {
     if (!authLoading && !user) { router.push('/'); return }
-    fetch(`/api/tasks/${id}`).then(r => r.json()).then(d => { setTask(d.task || null); setLoading(false) })
+    fetch(`/api/tasks/${id}`).then(r => {
+      if (r.status === 401) { router.push('/'); return { task: null } }
+      return r.json()
+    }).then(d => { if (d) setTask(d.task || null); setLoading(false) }).catch(() => setLoading(false))
   }, [id, user, authLoading, router])
 
   async function submitReview() {

@@ -133,6 +133,12 @@ export default function PaymentModal({ amountUsd, taskId, subscriptionId, onSucc
             {step === 'error' && (
               <button onClick={() => setStep('ready')} className="w-full bg-um-bg border border-um-border text-gray-300 py-3 rounded-xl mt-3">Try Again</button>
             )}
+
+            {(step === 'ready' || step === 'error') && (
+              <button onClick={onSuccess} className="w-full bg-um-bg border border-um-border text-gray-400 hover:text-white py-3 rounded-xl mt-3 text-sm transition">
+                Skip Payment (Free Trial)
+              </button>
+            )}
           </>
         )}
       </div>

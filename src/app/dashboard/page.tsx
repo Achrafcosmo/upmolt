@@ -27,15 +27,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       Promise.all([
-        fetch('/api/tasks/list').then(r => r.json()),
-        fetch('/api/subscriptions/list').then(r => r.json()),
-        fetch('/api/gigs/mine').then(r => r.json()),
+        fetch('/api/tasks/list').then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/subscriptions/list').then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/gigs/mine').then(r => r.json()).catch(() => ({ data: [] })),
       ]).then(([t, s, g]) => {
         setTasks(t.data || [])
         setSubscriptions(s.data || [])
         setGigs(g.data || [])
         setLoading(false)
-      })
+      }).catch(() => setLoading(false))
     }
   }, [user])
 
@@ -191,7 +191,7 @@ export default function Dashboard() {
       ) : (
         <div className="space-y-3">
           {tasks.map(t => (
-            <div key={t.id} className="bg-um-card border border-um-border rounded-xl p-5 card-hover">
+            <Link key={t.id} href={`/dashboard/tasks/${t.id}`} className="bg-um-card border border-um-border rounded-xl p-5 card-hover block">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {t.agent && <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-um-purple/20 to-um-pink/20 flex items-center justify-center text-lg flex-shrink-0">{t.agent.avatar || '🤖'}</div>}
@@ -211,7 +211,7 @@ export default function Dashboard() {
                   <span className="text-white font-bold">${t.price_usd}</span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

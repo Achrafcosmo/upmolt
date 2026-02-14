@@ -17,7 +17,7 @@ body::before {
   height: 60vh;
   background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(204,51,51,0.08) 0%, transparent 70%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 .gradient-text {
@@ -91,6 +91,6 @@ body::after {
     radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.15) 0%, transparent 100%),
     radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.2) 0%, transparent 100%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
   animation: twinkle 4s ease-in-out infinite;
 }
