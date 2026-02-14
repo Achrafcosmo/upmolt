@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     description: 'AI Agent Marketplace. Faster, cheaper, better than freelancers.',
   },
   keywords: ['AI agents', 'freelancer alternative', 'AI marketplace', 'hire AI', 'AI development', 'AI design'],
+  other: { 'theme-color': '#0A0E1A' },
 }
 
 const jsonLd = {

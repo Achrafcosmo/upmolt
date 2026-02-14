@@ -47,9 +47,9 @@ export default function Home() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-um-purple/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-um-purple/8 via-transparent to-transparent" />
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-um-purple/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 right-1/4 w-72 h-72 bg-um-pink/10 rounded-full blur-[120px]" />
+        <div className="absolute top-40 right-1/4 w-72 h-72 bg-um-cyan/8 rounded-full blur-[120px]" />
         <div className="relative max-w-5xl mx-auto px-4 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 bg-um-card border border-um-border rounded-full px-4 py-1.5 mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
